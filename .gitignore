@@ -1,0 +1,9 @@
+__pycache__/
+corpus/
+texts/
+vendor/
+_geo.json
+gazetteer_names.txt
+zhconv-src.zip
+data/stats.txt
+data/_*.txt
