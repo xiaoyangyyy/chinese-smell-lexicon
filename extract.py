@@ -196,6 +196,43 @@ BENCAO_ERA = {
 }
 
 
+REIGN_ERA = (
+    ("顺治", "清"), ("康熙", "清"), ("雍正", "清"), ("乾隆", "清"), ("嘉庆", "清"),
+    ("道光", "清"), ("咸丰", "清"), ("同治", "清"), ("光绪", "清"), ("宣统", "清"),
+    ("洪武", "明"), ("建文", "明"), ("永乐", "明"), ("洪熙", "明"), ("宣德", "明"),
+    ("正统", "明"), ("景泰", "明"), ("天顺", "明"), ("成化", "明"), ("弘治", "明"),
+    ("正德", "明"), ("嘉靖", "明"), ("隆庆", "明"), ("万历", "明"), ("泰昌", "明"),
+    ("天启", "明"), ("崇祯", "明"), ("民国", "民国"),
+)
+
+
+def reign_era(title):
+    for reign, era in REIGN_ERA:
+        if reign in title:
+            return era
+    return ""
+
+
+def publish_rows(rows):
+    tang = {
+        (row[0], row[6], row[7])
+        for row in rows
+        if row[9] == "全唐诗"
+    }
+    kept = []
+    for row in rows:
+        if len(row[6]) < 4:
+            continue
+        if row[9] == "全宋诗" and (row[0], row[6], row[7]) in tang:
+            continue
+        if not row[8]:
+            era = reign_era(row[7])
+            if era:
+                row = row[:8] + (era,) + row[9:]
+        kept.append(row)
+    return kept
+
+
 def book_name(filename):
     stem = os.path.splitext(os.path.basename(filename))[0]
     stem = re.sub(r"^\d+-", "", stem)
@@ -268,7 +305,7 @@ def add_prose(rows, seen, by_source, index, places, seasons, senses):
         print("SOURCE", source, "files", len(paths), flush=True)
         for path in paths:
             title = book_name(path)
-            era = BENCAO_ERA.get(title, "") if is_bencao else ""
+            era = BENCAO_ERA.get(title, "") if is_bencao else reign_era(title)
             default_place = "" if is_bencao else place_from_title(title)
             text = read_text(path)
             before = len(rows)
@@ -321,6 +358,10 @@ def main():
                         by_source[source] += 1
             print("  ", os.path.basename(path), "total", len(rows), flush=True)
     add_prose(rows, seen, by_source, index, places, seasons, senses)
+    rows = publish_rows(rows)
+    by_source = defaultdict(int)
+    for row in rows:
+        by_source[row[9]] += 1
     with open(CSV_PATH, "w", encoding="utf-8-sig", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(["气味词", "类别", "对象", "地方", "季节", "感官", "原文", "出处", "时代", "来源"])

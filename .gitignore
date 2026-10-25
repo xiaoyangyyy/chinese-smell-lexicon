@@ -7,3 +7,7 @@ gazetteer_names.txt
 zhconv-src.zip
 data/stats.txt
 data/_*.txt
+_*.py
+_*.txt
+_*.json
+_*.html
